@@ -1,4 +1,10 @@
-blog:
-    resource: "@BlogBundle/Controller/"
+blog_pages:
+    resource: "@BlogBundle/Controller/PagesController.php"
     type:     annotation
     prefix:   /
+
+blog_posts:
+    resource: "@BlogBundle/Controller/PostsController.php"
+    type:     annotation
+    prefix:   /
+

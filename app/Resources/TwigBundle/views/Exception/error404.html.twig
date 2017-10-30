@@ -1,0 +1,13 @@
+{% extends '@Blog/base.html.twig' %}
+
+{% set hideSideBar = true %}
+
+{% block pageTitle %}Nie znaleziono zasobów{% endblock %}
+
+{% block contentTitle %}Nie znaleziono zasobów{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <img src="{{ asset('img/error404.png') }}" alt="error404">
+</div>
+{% endblock %}
