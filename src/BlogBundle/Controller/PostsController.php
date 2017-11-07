@@ -2,10 +2,13 @@
 
 namespace BlogBundle\Controller;
 
+use BlogBundle\Entity\Category;
 use BlogBundle\Entity\Post;
+use BlogBundle\Entity\Tag;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\HttpFoundation\Request;
 
 class PostsController extends Controller
 {
@@ -20,18 +23,48 @@ class PostsController extends Controller
      *     requirements={"page" = "\d+"}
      * )
      *
-     * @Template()
+     * @Template("BlogBundle:Posts:postsList.html.twig")
      */
     public function indexAction($page)
     {
-        $postRepo = $this->getDoctrine()->getRepository(Post::class);
-        $allPosts = $postRepo->findBy([], ['publishedDate' => 'DESC']);
+        $pagination = $this->getPaginatedPosts([
+            'status' => 'published',
+            'orderBy' => 'p.publishedDate',
+            'orderDir' => 'DESC'
+        ], $page);
 
-        $paginator = $this->get('knp_paginator');
-        $pagination = $paginator->paginate($allPosts, $page, $this->itemsLimit);
-
-        return ['pagination' => $pagination];
+        return ['pagination' => $pagination, 'listTitle' => 'Najnowsze wpisy'];
     }
+
+
+    /**
+     * @Route(
+     *     "/search/{page}",
+     *     name="blog_search",
+     *     defaults={"page" = 1},
+     *     requirements={"page" = "\d+"}
+     * )
+     *
+     * @Template("BlogBundle:Posts:postsList.html.twig")
+     */
+    public function searchAction(Request $request, $page)
+    {
+        $searchParam = $request->query->get('search');
+
+        $pagination = $this->getPaginatedPosts([
+            'status' => 'published',
+            'orderBy' => 'p.publishedDate',
+            'orderDir' => 'DESC',
+            'search' => $searchParam
+        ], $page);
+
+        return [
+            'pagination' => $pagination,
+            'listTitle' => sprintf('Wyniki wyszukiwania frazy "%s"', $searchParam),
+            'searchParam' => $searchParam
+        ];
+    }
+
 
     /**
      * @Route(
@@ -43,7 +76,14 @@ class PostsController extends Controller
      */
     public function postAction($slug)
     {
-        return [];
+        $postRepo = $this->getDoctrine()->getRepository(Post::class);
+        $post = $postRepo->getPublishedPost($slug);
+
+        if ($post === null) {
+            throw $this->createNotFoundException('Post nie został odnaleziony!');
+        }
+
+        return ['post' => $post];
     }
 
     /**
@@ -54,11 +94,24 @@ class PostsController extends Controller
      *     requirements={"page" = "\d+"}
      * )
      *
-     * @Template()
+     * @Template("BlogBundle:Posts:postsList.html.twig")
      */
-    public function categoryAction($slug)
+    public function categoryAction($slug, $page)
     {
-        return [];
+        $pagination = $this->getPaginatedPosts([
+            'status' => 'published',
+            'orderBy' => 'p.publishedDate',
+            'orderDir' => 'DESC',
+            'categorySlug' => $slug
+        ], $page);
+
+        $categoryRepo = $this->getDoctrine()->getRepository(Category::class);
+        $category = $categoryRepo->findOneBySlug($slug);
+
+        return [
+            'pagination' => $pagination,
+            'listTitle' => sprintf('Wpisy w kategorii "%s"', $category->getName())
+        ];
     }
 
     /**
@@ -69,10 +122,34 @@ class PostsController extends Controller
      *     requirements={"page" = "\d+"}
      * )
      *
-     * @Template()
+     * @Template("BlogBundle:Posts:postsList.html.twig")
      */
-    public function tagAction($slug)
+    public function tagAction($slug, $page)
     {
-        return [];
+        $tagRepo = $this->getDoctrine()->getRepository(Tag::class);
+        $tag = $tagRepo->findOneBySlug($slug);
+
+        $pagination = $this->getPaginatedPosts([
+            'status' => 'published',
+            'orderBy' => 'p.publishedDate',
+            'orderDir' => 'DESC',
+            'tagSlug' => $slug
+        ], $page);
+
+        return [
+            'pagination' => $pagination,
+            'listTitle' => sprintf('Wpisy z tagiem "%s"', $tag->getName())
+        ];
+    }
+
+    protected function getPaginatedPosts(array $params = [], $page)
+    {
+        $postRepo = $this->getDoctrine()->getRepository(Post::class);
+        $qb = $postRepo->getQueryBuilder($params);
+
+        $paginator = $this->get('knp_paginator');
+        $pagination = $paginator->paginate($qb, $page, $this->itemsLimit);
+
+        return $pagination;
     }
 }

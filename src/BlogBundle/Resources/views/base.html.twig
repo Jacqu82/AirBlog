@@ -75,8 +75,8 @@
             </h2>
 
             {% if hideSearch is not defined %}
-            <form class="right-side" action="#">
-                <input type="text" name="search" placeholder="Wyszukaj">
+            <form class="right-side" action="{{ path('blog_search') }}">
+                <input type="text" name="search" value="{{ searchParam is defined ? searchParam : '' }}" placeholder="Wyszukaj">
             </form>
             {% endif %}
         </div>
@@ -86,7 +86,6 @@
         <div class="pos-center">
 
             {% block content %}{% endblock %}
-
             {% if hideSideBar is not defined %}
             <div class="right-side sidebar">
                 <div class="menu">
@@ -98,6 +97,13 @@
                         <li><a href="#">Promy kosmiczne</a></li>
                         <li><a href="#">Tajne rozwiązania</a></li>
                     </ul>
+
+                    {#{{ print_categories_list() }}#}
+                    {#<ul class="categories">#}
+                    {#{% for category in categoriesList %}#}
+                        {#<li><a class="active" href="{{ path('blog_category', {'slug': category.slug}) }}">{{ category.name }}</a></li>#}
+                    {#{% endfor %}#}
+                    {#</ul>#}
                 </div>
 
                 <div class="tag-cloud">
